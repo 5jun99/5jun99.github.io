@@ -1,5 +1,5 @@
 ---
-title: "[Spring] cannot invoke "~" because "~" is null"
+title: '[Spring] cannot invoke "~" because "~" is null'
 date: 2024-07-14 00:00:00 +0900
 category: Java
 tags: [Spring]
@@ -15,7 +15,7 @@ original_url: https://velog.io/@9409velog/Spring-cannot-invoke-%EB%A9%94%EC%84%9
 
 **빈 주입이란 무엇이지?** 의존성 주입의 일종이다.
 
-스프링에서는 객체의 생성과 소멸 등에 대한 제어를 컨테이너가 관리하고 필요할 때 주입을 받아 사용하게 된다. 즉 위 에러는 의존성 주입(di 내지 빈 주입)이 제대로 되지 않아서 생긴 것인데, 
+스프링에서는 객체의 생성과 소멸 등에 대한 제어를 컨테이너가 관리하고 필요할 때 주입을 받아 사용하게 된다. 즉 위 에러는 의존성 주입(di 내지 빈 주입)이 제대로 되지 않아서 생긴 것인데,
 
 의존성을 주입할 수 있는 방법은 다음과 같다.  
 1\. 생성자 주입  
