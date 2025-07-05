@@ -35,3 +35,5 @@ original_url: https://velog.io/@9409velog/Spring-cannot-invoke-%EB%A9%94%EC%84%9
 사실 나도 완벽히 이해는 안됐다. bean이 무엇이고, final 과 생성자의 관계가 직관적으로 와닿지 않는다.
 
 ![](assets/9409velog/spring-cannot-invoke-because-is-null_image.png)
+
+last_modified_at: 2025-07-06T03:57:51
