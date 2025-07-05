@@ -1,33 +1,22 @@
 source "https://rubygems.org"
-# Hello! This is where you manage which Jekyll version is used to run.
-# When you want to use a different version, change it below, save the
-# file and run `bundle install`. Run Jekyll with `bundle exec`, like so:
-#
-#     bundle exec jekyll serve
-#
-# This will help ensure the proper Jekyll version is running.
-# Happy Jekylling!
-gem "jekyll", "~> 4.4.1"
-# This is the default theme for new Jekyll sites. You may change this to anything you like.
-gem "minima", "~> 2.5"
-# If you want to use GitHub Pages, remove the "gem "jekyll"" above and
-# uncomment the line below. To upgrade, run `bundle update github-pages`.
-# gem "github-pages", group: :jekyll_plugins
-# If you have any plugins, put them here!
+
+# GitHub Pages에서 사용하는 전체 gem 버전 묶음 (Jekyll 3.9.x 포함)
+gem "github-pages", group: :jekyll_plugins
+
+# GitHub Pages는 자체적으로 jekyll-feed도 포함하므로 따로 명시하지 않아도 됨
+# 필요시 추가적인 플러그인은 여기 group 안에 넣을 수 있음
 group :jekyll_plugins do
-  gem "jekyll-feed", "~> 0.12"
+  # 예시: gem "jekyll-sitemap"
 end
 
-# Windows and JRuby does not include zoneinfo files, so bundle the tzinfo-data gem
-# and associated library.
+# Windows 등 플랫폼 특화 설정
 platforms :mingw, :x64_mingw, :mswin, :jruby do
   gem "tzinfo", ">= 1", "< 3"
   gem "tzinfo-data"
 end
 
-# Performance-booster for watching directories on Windows
-gem "wdm", "~> 0.1", :platforms => [:mingw, :x64_mingw, :mswin]
+# 성능 향상 (Windows용)
+gem "wdm", "~> 0.1", platforms: [:mingw, :x64_mingw, :mswin]
 
-# Lock `http_parser.rb` gem to `v0.6.x` on JRuby builds since newer versions of the gem
-# do not have a Java counterpart.
-gem "http_parser.rb", "~> 0.6.0", :platforms => [:jruby]
+# JRuby 대응
+gem "http_parser.rb", "~> 0.6.0", platforms: [:jruby]
