@@ -3,3 +3,7 @@ _site
 .jekyll-cache
 .jekyll-metadata
 vendor
+immigration.py
+commit_posts.sh
+commit_new_posts.sh
+HELP.md

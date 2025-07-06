@@ -1,6 +1,6 @@
 ---
 title: "Spring에서 비동기 처리와 프록시 객체, 그리고 스레드의 이해"
-date: 2025-07-06 00:00:00 +0900
+date: 2025-07-04 00:00:00 +0900
 category: spring
 tags: [spring, async, thread, proxy, aop]
 ---
