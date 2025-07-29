@@ -1,0 +1,47 @@
+---
+layout: post
+title: "어두운 길 (파이썬)"
+date: 2023-05-12 00:00:00 +0900
+category: Algorithm
+tags: []
+original_url: https://velog.io/@9409velog/%EC%96%B4%EB%91%90%EC%9A%B4-%EA%B8%B8
+---
+
+해당 문제는 이코테 p.397에 실린 문제이다. 신장 트리 개념을 이용하여서 두 노드(마을)의 루트가 이미 같으면 즉 사이클이 형성되어 있으면 해당 경로의 비용은 더하지 않고 나머지 경로만 더하는 코드를 작성하였다.
+
+```python
+def find\_parent(parent, x): #루트를 찾아내는 함수
+if parent[x] != x:
+parent[x] = find\_parent(parent, parent[x])
+return parent[x]
+
+def union\_parent(parent, a, b): #루트 합연산 함수
+a = find\_parent(parent, a)
+b = find\_parent(parent, b)
+if a < b:
+parent[b] = a
+else:
+parent[a] = b
+
+n, m = map(int, input().split()
+parent = [0] \* n #루트를 담을 리스트 선언
+edges = [] #도로들의 정보를 담을 리스트
+result = 0 #최소 비용
+all\_cost = 0 #총 비용
+for i in range(m):
+a, b, dist = map(int, input().split())
+edges.append((dist, a, b))
+all\_cost += dist #총 비용 계산
+
+for i in range(n):
+parent[i] = i #루트를 자기 자신으로 초기화
+
+edges.sort() #가장 비용이 적은 도로부터
+for edge in edges:
+dist, a, b = edge
+if find\_parent(parent, a) != find\_parent(parent, b): # 사이클 확인
+union\_parent(parent, a, b)
+result += dist
+
+print(all\_cost - result)
+```

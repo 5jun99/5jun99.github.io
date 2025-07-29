@@ -1,0 +1,71 @@
+---
+layout: post
+title: "1, 2, 3 더하기 [백준 9095]"
+date: 2023-06-30 00:00:00 +0900
+category: Algorithm
+tags: []
+original_url: https://velog.io/@9409velog/1-2-3-%EB%8D%94%ED%95%98%EA%B8%B0-%EB%B0%B1%EC%A4%80-9095
+---
+
+## 문제
+
+---
+
+1, 2, 3 더하기 [백준 9095]  
+<https://www.acmicpc.net/problem/9095>
+
+## 풀이
+
+---
+
+처음에는 다이나믹 프로그래밍으로 풀어보려 점화식을 찾으려 노력했지만 생각보다 생각이 잘 나지 않아서 재귀 함수를 이용하여 풀어보려했다. 마치 연산자 끼워넣기 문제처럼 말이다.  
+문제는 맞았는데 과연 점화식이 있을까 해서 찾아봤는데 기상천외하게도 3번째 전 2번째 전 1번째 전 나타낼 수 있는 수의 개수를 더하면 되는 것이 었다. 얘를 들어 4는 1일때 1 2일때 2 3일때 4를 더해서 7이고 5는 2, 3, 4 일 때를 더한 2 + 4 + 7 = 13이 답이었다
+
+## 코드
+
+---
+
+### dfs
+
+```
+def dfs(nownum, nowarray):
+    if nownum == 0:
+        d.append(nowarray)
+        return
+    if nownum >= 3:
+        dfs(nownum - 3, nowarray + [3])
+    if nownum >= 2:
+        dfs(nownum - 2, nowarray + [2])
+    if nownum >= 1:
+        dfs(nownum - 1, nowarray + [1])
+t = int(input())
+for _ in range(t):
+    n = int(input())
+    d = []
+    dfs(n, [])
+    print(len(d))
+
+```
+
+### 다이나믹 프로그래밍
+
+```
+def f(num):
+    if num == 1:
+        return 1
+    elif num == 2:
+        return 2
+    elif num == 3:
+        return 4
+    else:
+        if not dp[num]:
+            dp[num] = f(num - 1) + f(num - 2) + f(num - 3)
+        return dp[num]
+t = int(input())
+dp = [0] * 12
+for _ in range(t):
+    n = int(input())
+    d = []
+    print(f(n))
+
+```
