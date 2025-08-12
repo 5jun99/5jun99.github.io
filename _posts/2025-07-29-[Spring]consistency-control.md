@@ -1,54 +1,8 @@
 ---
-layout: post
-title: "비동기 subscribe 내부에서 도메인 객체로 update하면 생기는 동시성 문제"
-date: 2025-07-29
-categories: Spring
-tags: []
----
-
-## 1. 문제 상황
-
-`TestExecutor` 클래스에서 `Project` 도메인을 subscribe 바깥에서 미리 조회하고, 이후 `.subscribe()` 내부에서 이 객체에 대해 `updateTestRate()` 또는 `updateScore()`를 호출하고 저장했다.
-그런데 테스트 결과가 정상 저장되지 않거나, 상태가 누락되는 현상이 발생했다.
-
-원인을 추적해보니, 비동기 subscribe 시점에서는 `project` 객체가 더 이상 최신 상태가 아니고, 다른 요청 흐름에서 이미 해당 프로젝트가 수정되었을 수도 있었다. 결과적으로 낡은 상태로 덮어쓰기(stale write)가 발생한 것이다.
-
-## 2. 문제 해결
-
-비동기 subscribe 내부에서는 `project` 객체를 그대로 쓰지 않고, 해당 시점에서 다시 조회하는 방식으로 변경했다.
-
-```java
-projectPort.findById(projectId).ifPresent(freshProject -> {
-    freshProject.updateTestRate(tests);
-    projectPort.update(freshProject);
-});
-```
-
-이렇게 하면 항상 최신 상태의 도메인으로부터 변경을 수행하므로, 동시성 충돌 위험이 줄어들고, 데이터 정합성도 확보된다.
-
-## 3. 이론
-
-이건 넓은 의미에서의 **동시성 제어(concurrency control)** 문제다.
-특히 비동기 흐름에서는 콜백이 실행되는 시점이 예측 불가능하고, 그 사이에 도메인 객체의 상태가 변경될 수 있다.
-
-이러한 상태를 **Stale State** 또는 **Detached Domain Object**라 부르며, 이를 막기 위해서는:
-
--   subscribe 안에서는 도메인 객체를 다시 조회하거나
--   상태를 Command 형식(`projectId`, `score`)으로 분리해서 전달하거나
--   Optimistic Locking 등을 도입하는 방법이 있다.
-
-도메인 객체와 영속성 계층(Entity)을 분리한 설계에서는 특히 "재조회 후 갱신" 전략이 좋다고 판단했다.
-
-좋아. 요청한 내용에 맞춰 \*\*도메인이 엔티티일 경우 사용할 수 있는 동시성 처리 기법(Optimistic Locking, Pessimistic Locking 등)\*\*까지 추가해서 글을 확장했어. 아래는 수정된 마크다운 전체다:
-
----
-
-````markdown
----
 title: "비동기 subscribe 내부에서 도메인 객체로 update하면 생기는 동시성 문제"
 date: 2025-07-29
 categories: [Spring, Backend]
-tags: [Reactive, Domain, Concurrency]
+tags: []
 ---
 
 ## 1. 문제 상황
@@ -71,7 +25,6 @@ projectPort.findById(projectId).ifPresent(freshProject -> {
     projectPort.update(freshProject);
 });
 ```
-````
 
 이렇게 하면 항상 **최신 상태의 도메인으로부터 변경을 수행**하므로, 동시성 충돌 위험이 줄어들고, 데이터 정합성도 확보된다.
 
