@@ -1,0 +1,263 @@
+---
+title: "JPA N+1 문제 해결, Jmeter 성능 테스트"
+date: 2025-08-22
+categories: [Spring]
+tags: []
+---
+
+## 📋 목차
+
+1. [문제 발견: N+1 문제란?](#문제-발견-n1-문제란)
+2. [테스트 환경 구성](#테스트-환경-구성)
+3. [6가지 쿼리 최적화 방식 비교](#6가지-쿼리-최적화-방식-비교)
+4. [성능 테스트 결과](#성능-테스트-결과)
+5. [배치 조회: 게임 체인저](#배치-조회-게임-체인저)
+6. [실무 적용 가이드](#실무-적용-가이드)
+
+---
+
+## 문제 발견: N+1 문제란?
+
+```java
+
+@Service
+public class AnnotationService {
+    public AnnotationListResponse loadAnnotations(Integer imageId) {
+        List<Annotation> annotations = annotationRepository.findByImageId(imageId);
+        return annotations.stream()
+                .map(AnnotationResponse::from)  // 여기서 N+1 발생
+                .collect(toList());
+    }
+}
+```
+
+### 실제 실행되는 쿼리들
+
+```sql
+-- 1개 쿼리: Annotation 조회
+SELECT *
+FROM annotations
+WHERE image_id = ?
+
+-- N개 쿼리: 각 Annotation마다 User 조회
+SELECT *
+FROM users
+WHERE id = ? -- Annotation 1의 annotated_by
+SELECT *
+FROM users
+WHERE id = ? -- Annotation 2의 annotated_by
+SELECT *
+FROM users
+WHERE id = ? -- Annotation 3의 annotated_by
+               ...
+
+-- N*M개 쿼리: 각 Annotation마다 Shape들 조회
+               SELECT *
+FROM shapes
+WHERE annotation_id = ?
+    ...
+```
+
+**결과**: Annotation 50개 → **2,551개 쿼리** 실행
+
+---
+
+## 테스트 환경 구성
+
+### 엔티티 관계도
+
+```
+Annotation (1) ─── (N) Shape (1) ─── (N) Coordinate
+     │
+     └── (N) ─── (1) User
+     └── (N) ─── (1) Image
+```
+
+### 테스트 데이터 시나리오
+
+| 시나리오 | Annotation 수 | Shape/Annotation | Coordinate/Shape | 총 Coordinate |
+| -------- | ------------- | ---------------- | ---------------- | ------------- |
+| 기본     | 5개           | 2개              | 10개             | 100개         |
+| Hard     | 20개          | 5개              | 15개             | 1,500개       |
+| Mad      | 50개          | 10개             | 25개             | 12,500개      |
+
+### JMeter 부하 테스트 설정
+
+-   **동시 사용자**: 10~50명
+-   **요청 수**: 1,000회
+-   **측정 항목**: 응답시간, TPS, 에러율
+
+---
+
+## 6가지 쿼리 최적화 방식 비교
+
+### 1️⃣ N+1 방식 (기준점)
+
+```java
+
+@Query("SELECT a FROM Annotation a WHERE a.image.id = :imageId")
+List<Annotation> findByImageId(Integer imageId);
+```
+
+-   **쿼리 수**: 1 + N + N×M + N×M×L
+-   **특징**: 가장 단순하지만 성능 최악
+
+### 2️⃣ EntityGraph 방식
+
+```java
+
+@EntityGraph(attributePaths = {"annotatedBy", "image"})
+@Query("SELECT a FROM Annotation a WHERE a.image.id = :imageId")
+List<Annotation> findByImageIdWithEntityGraph(Integer imageId);
+```
+
+-   **쿼리 수**: 1개 (JOIN 사용)
+-   **특징**: 간단한 관계에 효과적
+
+### 3️⃣ Fetch Join 방식
+
+```java
+
+@Query("SELECT a FROM Annotation a " +
+        "JOIN FETCH a.annotatedBy " +
+        "JOIN FETCH a.image " +
+        "WHERE a.image.id = :imageId")
+List<Annotation> findByImageIdWithFetchJoin(Integer imageId);
+```
+
+-   **쿼리 수**: 1개 (명시적 JOIN)
+-   **특징**: EntityGraph보다 명확한 제어
+
+### 4️⃣ 모든 관계 JOIN (위험)
+
+```java
+
+@EntityGraph(attributePaths = {"annotatedBy", "image", "shapes", "shapes.coordinates"})
+@Query("SELECT DISTINCT a FROM Annotation a WHERE a.image.id = :imageId")
+List<Annotation> findByImageIdWithAllRelations(Integer imageId);
+```
+
+-   **쿼리 수**: 1개 (복잡한 JOIN)
+-   **특징**: 데이터 폭발로 인한 성능 급락 위험
+
+### 5️⃣ 배치 조회 방식
+
+```java
+// 1. Annotation만 조회
+List<Annotation> annotations = repository.findByImageId(imageId);
+
+
+// 2. User들 배치 조회
+List<Integer> annotationIds = annotations.stream().map(Annotation::getId).toList();
+List<User> users = repository.findUsersByAnnotationIds(annotationIds);
+Map<Integer, User> userMap = users.stream().collect(toMap(User::getId, identity()));
+
+// 3. Shape들 배치 조회
+List<Shape> shapes = shapeRepository.findByAnnotationIdIn(annotationIds);
+
+// 4. Coordinate들 배치 조회
+List<Integer> shapeIds = shapes.stream().map(Shape::getId).toList();
+List<Coordinate> coordinates = coordinateRepository.findByShapeIdIn(shapeIds);
+
+// 5. 메모리에서 관계 매핑
+
+- 쿼리 수: 4개 (고정)
+- 특징: 데이터 양과 무관하게 일정한 성능
+```
+
+---
+
+## 성능 테스트 결과
+
+### 응답시간 비교 (Average)
+
+| 방식            | 기본 (5개) | Hard (20개) | Mad (50개)  | 개선율    |
+| --------------- | ---------- | ----------- | ----------- | --------- |
+| **N+1 방식**    | 628ms      | 2,624ms     | 12,556ms    | -         |
+| **EntityGraph** | 570ms      | 7,145ms     | 12,602ms    | 9%        |
+| **Fetch Join**  | **537ms**  | 2,187ms     | 12,556ms    | **14%**   |
+| **배치 조회**   | **3ms**    | **303ms**   | **2,199ms** | **97.8%** |
+
+### 발견사항
+
+#### 1.
+
+```
+
+기본 데이터 (5개 Annotation):
+✅ Fetch Join: 537ms (최적)
+
+Mad 데이터 (50개 Annotation):
+❌ Fetch Join: 12,556ms (최악)
+✅ 배치 조회: 2,199ms (최적)
+
+```
+
+#### 2. 데이터 크기별 성능 격차
+
+-   **기본 → Mad**: Fetch Join은 **23배** 성능 저하
+-   **기본 → Mad**: 배치 조회는 **733배**만 성능 저하
+
+#### 3. 처리량(TPS) 차이
+
+-   **배치 조회**: 992 TPS vs **N+1**: 104 TPS
+-   **9.5배 처리량 향상**
+
+---
+
+## 적용
+
+#### 1. 간단한 관계 (1-2 depth)
+
+```java
+// ✅ Fetch Join 사용
+@Query("SELECT a FROM Annotation a JOIN FETCH a.annotatedBy WHERE a.image.id = :imageId")
+```
+
+-   **조건**: 관계가 적고 데이터량이 예측 가능
+-   **장점**: 간단하고 직관적
+
+#### 2. 복잡한 관계 (3+ depth)
+
+```java
+// ✅ 배치 조회 사용
+List<Entity> entities = repository.findByCondition();
+Map<Integer, RelatedEntity> relatedMap = getRelatedEntities(entityIds);
+```
+
+-   **조건**: 관계가 복잡하거나 데이터량이 많음
+-   **장점**: 예측 가능한 성능, 메모리 효율적
+
+#### 3. 읽기 전용 + 성능 크리티컬
+
+```java
+// ✅ DTO Projection 사용
+@Query("SELECT new com.example.AnnotationDto(a.id, u.name, i.url) " +
+        "FROM Annotation a JOIN a.annotatedBy u JOIN a.image i " +
+        "WHERE a.image.id = :imageId")
+```
+
+-   **조건**: 특정 필드만 필요하고 성능이 최우선
+-   **장점**: 최소한의 데이터 전송, 최고 성능
+
+---
+
+## 📝 결론 및 교훈
+
+### 핵심 교훈 3가지
+
+1. **"항상 JOIN이 좋다"는 착각을 버리자**
+
+    - 간단한 관계: JOIN 우수
+    - 복잡한 관계: 배치 조회 압승
+
+2. **데이터 크기에 따른 전략 수립**
+
+    - 작은 데이터: 편의성 중심
+    - 큰 데이터: 성능 중심
+
+3. **실제 측정이 답이다**
+    - 이론보다 실측
+    - 다양한 시나리오 테스트 필수
+
+--
