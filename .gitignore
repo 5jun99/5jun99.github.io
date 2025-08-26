@@ -4,3 +4,5 @@ _site
 .jekyll-metadata
 vendor
 .DS_Store
+**/.DS_Store/
+commit_posts.sh
