@@ -1,6 +1,6 @@
 ---
 title: "Nginx Proxy Manager와 Jenkins를 활용한 롤링 배포 구축기"
-date: 2025-00-10
+date: 2025-09-10
 categories: [Infra]
 tags: []
 ---
