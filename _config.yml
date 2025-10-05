@@ -1,47 +1,47 @@
-title: 5jun99's Dev Blog
+title: 5's Dev Blog
 author: 5jun99
 email: oj041088@gmail.com
 description: >
-    개발하면서 겪은 시행착오와 기록들을 정리합니다. Velog 글들을 마이그레이션해서 GitHub Pages로 옮긴 블로그입니다.
+  개발하면서 겪은 시행착오와 기록들을 정리합니다. Velog 글들을 마이그레이션해서 GitHub Pages로 옮긴 블로그입니다.
 show_excerpts: false
 # Minima date format
 # refer to http://shopify.github.io/liquid/filters/date/ if you want to customize this
 sass:
-    sass_dir: _sass
+  sass_dir: _sass
 plainwhite:
-    name: Jun-Hyuk Oh
-    tagline: Backend Developer
-    date_format: "%Y-%m-%d"
-    sitemap: true # set to true to generate sitemap.xml content
-    search: true # set to true to enable searchbar
-    dark_mode: true # set to true to add dark mode toggle
-    portfolio_image: "assets/portfolio.png" # the path from the base directory of the site to the image to display (no / at the start)
-    html_lang: "ko" # set the lang attribute of the <html> tag for the pages. See here for a list of codes: https://www.w3schools.com/tags/ref_country_codes.asp
-    condensed_mobile:
-        #- home
-        - page
-        - post
-    # generate social links in footer
-    social_links:
-        github: 5jun99
-        linkedIn: in/5jun99
-        #dribbble: jekyll
-        #flickr:   jekyll
-        #instagram: jekyll
-        #pinterest: jekyll
-        #youtube: jekyll
-        #facebook: jekyll
-        #soundcloud: jekyll
-        #telegram: jekyll
-        #gitlab: jekyll
-        #email: jekyll
+  name: Jun-Hyuk Oh
+  tagline: Backend Developer
+  date_format: "%Y-%m-%d"
+  sitemap: true # set to true to generate sitemap.xml content
+  search: true # set to true to enable searchbar
+  dark_mode: true # set to true to add dark mode toggle
+  portfolio_image: "assets/portfolio.png" # the path from the base directory of the site to the image to display (no / at the start)
+  html_lang: "ko" # set the lang attribute of the <html> tag for the pages. See here for a list of codes: https://www.w3schools.com/tags/ref_country_codes.asp
+  condensed_mobile:
+    #- home
+    - page
+    - post
+  # generate social links in footer
+  social_links:
+    github: 5jun99
+    linkedIn: in/5jun99
+    #dribbble: jekyll
+    #flickr:   jekyll
+    #instagram: jekyll
+    #pinterest: jekyll
+    #youtube: jekyll
+    #facebook: jekyll
+    #soundcloud: jekyll
+    #telegram: jekyll
+    #gitlab: jekyll
+    #email: jekyll
 
-        # Mastodon instances
-        # mastodon:
-        # - username: jekyll
-        #   instance: example.com
-        # - username: jekyll2
-        #   instance: example.com
+    # Mastodon instances
+    # mastodon:
+    # - username: jekyll
+    #   instance: example.com
+    # - username: jekyll2
+    #   instance: example.com
 
 # If you want to link only specific pages in your header, uncomment
 # this and add the path to the pages in order as they should show up
@@ -52,5 +52,5 @@ plainwhite:
 theme: null
 
 plugins:
-    - jekyll-seo-tag
+  - jekyll-seo-tag
 #  - jekyll-feed
